@@ -1,26 +1,30 @@
 const NYTBaseurl = "https://api.nytimes.com/svc/topstories/v2/";
-const ApiKey = "4dfd6d88bc06460883571aef03350a5e"
+const ApiKey = "Your-api-key"
+const SECTIONS = "home, arts, automobiles, books, business, fashion, food, health, insider, magazine, movies, national, nyregion, obituaries, opinion, politics, realestate, science, sports, sundayreview, technology, theater, tmagazine, travel, upshot, world"
 
 function buildUrl (url) {
   return NYTBaseurl + url + ".json?api-key=" + ApiKey
 }
 
-var vm = new Vue({
-  el : '#app',
-  data :{
-      results : []
-  },
-  mounted () {
-    this.getPosts('home')
-  },
-  methods: {
-    getPosts (section) {
-      let url = buildUrl(section);
-      axios.get(url).then(response => {
-         this.results = response.data.results;
-      }).catch( error => { console.log(error); })
-    }
-  },
+Vue.component('news-list', {
+  props: ['results'],
+  template: `
+    <section>
+      <div class="row" v-for="posts in processedPosts">
+        <div class="columns large-3 medium-6" v-for="post in posts">
+          <div class="card">
+          <div class="card-divider">
+          {{ post.title }}
+          </div>
+          <a :href="post.url" target="_blank"><img :src="post.image_url"></a>
+          <div class="card-section">
+            <p>{{ post.abstract }}</p>
+          </div>
+        </div>
+        </div>
+      </div>
+  </section>
+  `,
   computed: {
     processedPosts() {
       let posts = this.results;
@@ -37,6 +41,27 @@ var vm = new Vue({
         chunkedArray[j] = posts.slice(i,i+chunk);
       }
       return chunkedArray;
+    }
+  }
+});
+
+
+var vm = new Vue({
+  el : '#app',
+  data :{
+      results : [],
+      sections: SECTIONS.split(', '), //从section中创建一个数组
+      section: 'home'
+  },
+  mounted () {
+    this.getPosts(section)
+  },
+  methods: {
+    getPosts (section) {
+      let url = buildUrl(section);
+      axios.get(url).then(response => {
+         this.results = response.data.results;
+      }).catch( error => { console.log(error); })
     }
   }
 });
